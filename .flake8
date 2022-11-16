@@ -1,0 +1,5 @@
+[flake8]
+exclude = backend/project/apps/core/migrations/*
+max-complexity = 12
+import-order-style = google
+max-line-length = 120

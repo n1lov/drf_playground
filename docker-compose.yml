@@ -1,0 +1,46 @@
+version: '3.7'
+services:
+  postgres:
+    image: postgres:15.0-alpine
+    container_name: postgres
+    restart: "no"
+    command: postgres -c 'client_encoding=UTF8'
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    env_file:
+      - env.postgres.env
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./backend
+    container_name: backend
+    command: gunicorn -b 0.0.0.0:8000 --reload -w 1 --max-requests 100 --timeout 20 project.wsgi
+    restart: "no"
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend:/app
+      - backend_static_data:/app/static
+    env_file:
+      - env.postgres.env
+      - env.backend.env
+    ports:
+      - "8001:8000"
+
+  nginx:
+    image: nginx:1.23.2-alpine
+    container_name: nginx
+    restart: "no"
+    depends_on:
+      - backend
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      - backend_static_data:/app/backend/static
+    ports:
+      - "8000:80"
+
+volumes:
+  postgres:
+  backend_static_data:
